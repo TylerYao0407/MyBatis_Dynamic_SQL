@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tyler.mapper.TeacherMapper">
+    <resultMap id="TeacherMap" type="teacher">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="sex" column="sex"/>
+        <result property="age" column="age"/>
+        <result property="info" column="info"/>
+    </resultMap>
+    <select id="selectTeacher" parameterType="teacher" resultMap="TeacherMap">
+        select * from teacher where id=#{id}
+    </select>
+
+    <!--if元素-->
+    <!--除了判断字段是否为空，还可以判断字段的值是不是想要的-->
+    <!--只需要修改test 中的值就可以了,他返回的是一个boolean型的值-->
+    <select id="test_if" parameterType="teacher" resultType="java.util.Map">
+        select * from teacher where name=#{name}
+        <if test="sex!=null and sex!=''">
+            and sex=#{sex}
+        </if>
+  </select>
+
+    <!--choose when otherwise 元素-->
+    <select id="test_choose_when_otherwise" parameterType="teacher" resultType="java.util.Map">
+        select * from teacher where 1=1
+        <choose>
+            <when test="age != null and age != ''">
+                and age=#{age}
+            </when>
+            <when test="sex != null and sex != ''">
+                and sex=#{sex}
+            </when>
+            <otherwise>
+                and info is not null
+            </otherwise>
+        </choose>
+    </select>
+
+    <!--where元素-->
+    <!--SQL语句：select * from teacher WHERE sex=?-->
+    <select id="test_where" parameterType="teacher" resultType="java.util.Map">
+        select * from teacher
+        <where>
+            <if test="sex!=null and sex!= ''">
+                sex=#{sex}
+            </if>
+        </where>
+    </select>
+
+    <!--trim元素-->
+    <!--SQL语句：select * from teacher where name=? and sex=?-->
+    <select id="test_trim" parameterType="teacher" resultType="java.util.Map">
+        select * from teacher
+
+            <trim prefix="where" prefixOverrides="and">
+                <if test="name!=null and name!=''">
+                    and name=#{name}
+                </if>
+                <if test="sex!=null and sex!=''">
+                    and sex=#{sex}
+                </if>
+            </trim>
+
+    </select>
+
+    <!--set元素-->
+    <!--SQL语句：UPDATE teacher SET name=? where id=?-->
+    <!--对于没有重新赋值的字段，用if语句过滤，所以SQL语句中根本没有sex字段，这样节省了网络资源-->
+    <update id="test_set" parameterType="teacher">
+        UPDATE teacher
+        <set>
+            <if test="name!=null and name!=''">
+                name=#{name},
+            </if>
+            <if test="sex!=null and sex!=''">
+                sex=#{sex}
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+    <!--可以替换的形式-->
+    <update id="可替换上面的" parameterType="teacher">
+        UPDATE teacher
+       <trim prefix="set" prefixOverrides=",">
+            <if test="name!=null and name!=''">
+                name=#{name},
+            </if>
+            <if test="sex!=null and sex!=''">
+                sex=#{sex}
+            </if>
+       </trim>
+        where id=#{id}
+    </update>
+
+    <!--foreach元素-->
+    <!--SQL语句：insert into teacher (name,sex,age,info) values (?,?,?,?) , (?,?,?,?) , (?,?,?,?) , (?,?,?,?) , (?,?,?,?)-->
+    <!--separator是指每次循环之间的分隔符 -->
+    <!--还有open和close，指的是开始和结束循环的符号-->
+    <insert id="test_foreach" parameterType="list">
+        insert into teacher (name,sex,age,info) values
+        <foreach collection="list" item="t" separator=",">
+            (#{t.name},#{t.sex},#{t.age},#{t.info})
+        </foreach>
+    </insert>
+
+
+    <!--为了解决不同数据库的连接符问题，我们使用bind元素-->
+    <select id="test_bind" parameterType="teacher" resultType="java.util.Map">
+        <bind name="b_name" value="'%'+name+'%'"/>
+        select * from teacher
+        where name like #{b_name}
+    </select>
+    <!--绑定多个数据-->
+    <select id="test_bind_more" resultType="java.util.Map">
+        <bind name="b_name" value="'%'+name+'%'"/>
+        <bind name="b_sex" value="'%'+sex+'%'"/>
+        SELECT * from teacher
+        where name like #{b_name} and sex like #{b_sex}
+    </select>
+</mapper>
